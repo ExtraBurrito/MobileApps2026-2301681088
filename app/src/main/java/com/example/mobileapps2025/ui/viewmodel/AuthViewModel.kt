@@ -41,8 +41,52 @@ class AuthViewModel : ViewModel(){
             }
             isLoading = false
         }
-
-
-
     }
+    fun signIn(email: String, password: String, onSuccess: () -> Unit) {
+        if (email.isBlank() || password.isBlank()) {
+            errorMessage = "Fields cannot be empty"
+            return
+        }
+
+        viewModelScope.launch {
+            isLoading = true
+            errorMessage = null
+
+            val result = repository.signIn(email, password)
+
+            if (result.isSuccess) {
+                onSuccess()
+            } else {
+                errorMessage = result.exceptionOrNull()?.message ?: "Invalid email or password"
+            }
+
+            isLoading = false
+        }
+    }
+
+    fun resetPassword(email: String, onSuccess: () -> Unit) {
+        if (email.isBlank()) {
+            errorMessage = "Email cannot be empty"
+            return
+        }
+
+        viewModelScope.launch {
+            isLoading = true
+            errorMessage = null
+
+            val result = repository.resetPassword(email)
+
+            if (result.isSuccess) {
+                onSuccess()
+            } else {
+                errorMessage = result.exceptionOrNull()?.message ?: "Failed to send reset email"
+            }
+
+            isLoading = false
+        }
+    }
+    // TODO
+    //    fun signOut() {
+    //        repository.signOut()
+    //    }
 }

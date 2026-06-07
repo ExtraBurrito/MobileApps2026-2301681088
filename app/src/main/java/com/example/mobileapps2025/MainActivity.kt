@@ -1,6 +1,6 @@
 package com.example.mobileapps2025
 
-import android.R
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,8 +24,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.mobileapps2025.data.UserPreferencesRepository
 import com.example.mobileapps2025.ui.screens.WelcomeScreen
+import com.example.mobileapps2025.ui.screens.LoginScreen
+import com.example.mobileapps2025.ui.screens.SignupScreen
 import com.example.mobileapps2025.ui.theme.MobileApps2025Theme
 import com.example.mobileapps2025.ui.viewmodel.AppViewModel
+import com.example.mobileapps2025.ui.viewmodel.AuthViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -35,6 +38,7 @@ class MainActivity : ComponentActivity() {
     private val appViewModel: AppViewModel by viewModels {
         AppViewModel.provideFactory(userPreferencesRepository)
     }
+    private val authViewModel: AuthViewModel by viewModels()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,7 +49,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigation(appViewModel = appViewModel)
+                    AppNavigation(appViewModel = appViewModel, authViewModel = authViewModel)
                 }
 
 
@@ -55,7 +59,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 @Composable
-fun AppNavigation(appViewModel: AppViewModel){
+fun AppNavigation(appViewModel: AppViewModel, authViewModel: AuthViewModel){
     val navController = rememberNavController()
 
     val currentLanguage by appViewModel.currentLanguage.collectAsStateWithLifecycle()
@@ -72,10 +76,31 @@ fun AppNavigation(appViewModel: AppViewModel){
             )
         }
 
+        composable("login") {
+            LoginScreen(
+                currentLanguage = currentLanguage,
+                authViewModel = authViewModel,
+                onLoginSuccess = {
+                    // Clear nav. history
+                    navController.navigate("main") { popUpTo(0) }
+                },
+                onNavigateToSignUp = { navController.navigate("signup") },
+                onResetPassword = { navController.navigate("reset") }
+            )
+        }
+
+        composable("signup") {
+            SignupScreen(
+                currentLanguage = currentLanguage,
+                authViewModel = authViewModel,
+                onNavigateToLogin = { navController.popBackStack() },
+                onSignupSuccess = {
+                    navController.navigate("main") { popUpTo(0) }
+                }
+            )
+        }
+
         ///TODO
-//        composable("login"){
-//
-//        }
 //        composable("main"){
 //
 //        }
@@ -83,8 +108,6 @@ fun AppNavigation(appViewModel: AppViewModel){
 
 
     }
-
-
 }
 
 @Composable

@@ -88,7 +88,7 @@ fun WelcomeScreen (
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, showSystemUi = true, device = "id:pixel_8_pro")
 @Composable
 fun WelcomeScreenPreview() {
     MaterialTheme {
