@@ -171,3 +171,17 @@ fun LoginScreenContent(
         }
     }
 }
+@Preview(showBackground = true, device = "id:pixel_2")
+@Composable
+fun LoginScreenPreview() {
+    MobileApps2025Theme {
+        LoginScreenContent(
+            currentLanguage = "English",
+            isLoading = false,
+            errorMessage = null,
+            onLoginClick = { _, _ -> },
+            onNavigateToSignUp = {},
+            onResetPassword = {}
+        )
+    }
+}
