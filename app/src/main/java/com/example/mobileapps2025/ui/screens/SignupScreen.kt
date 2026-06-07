@@ -12,20 +12,37 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mobileapps2025.ui.viewmodel.AuthViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun SignupScreen(
     currentLanguage: String,
-    authViewModel: AuthViewModel,
+    authViewModel: AuthViewModel = viewModel(),
     onNavigateToLogin: () -> Unit,
     onSignupSuccess: () -> Unit
 ){
+    SignupScreenContent(
+        currentLanguage = currentLanguage,
+        errorMessage = authViewModel.errorMessage,
+        isLoading = authViewModel.isLoading,
+        onSignupClick = { email, password, username ->
+            authViewModel.signUp(email, password, username, onSignupSuccess)
+        },
+        onNavigateToLogin = onNavigateToLogin
+    )
+}
+
+@Composable
+fun SignupScreenContent(
+    currentLanguage: String,
+    errorMessage: String?,
+    isLoading: Boolean,
+    onSignupClick: (String, String, String) -> Unit,
+    onNavigateToLogin: () -> Unit
+) {
     var email by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-
-    val errorMessage = authViewModel.errorMessage
-    val isLoading = authViewModel.isLoading
 
     val usernamelabel = when(currentLanguage) {
         "English" -> "Username"
@@ -141,13 +158,10 @@ fun SignupScreen(
                     // reg button
                     Button(
                         onClick = {
-
-                            authViewModel.signUp(
-                                email = email.trim(),
-                                password = password.trim(),
-                                username = username.trim(),
-                                onSuccess = onSignupSuccess
-                            )
+                            onSignupClick(
+                                email.trim(),
+                                password.trim(),
+                                username.trim())
                         },
                         modifier = Modifier.fillMaxWidth().height(50.dp),
                         shape = RoundedCornerShape(25.dp),
@@ -172,7 +186,7 @@ fun SignupScreen(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, device = "id:pixel_6_pro", showSystemUi = true)
 @Composable
 fun SignupScreenPreview() {
     MaterialTheme {
@@ -180,9 +194,11 @@ fun SignupScreenPreview() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            WelcomeScreen(
+            SignupScreenContent(
                 currentLanguage = "English",
-                onLanguageChange = {},
+                errorMessage = null,
+                isLoading = false,
+                onSignupClick = { _, _, _ -> },
                 onNavigateToLogin = {}
             )
         }

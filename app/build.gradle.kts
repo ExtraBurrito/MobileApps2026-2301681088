@@ -6,17 +6,13 @@ plugins {
 
 android {
     namespace = "com.example.mobileapps2025"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.mobileapps2025"
         minSdk = 24
         //noinspection OldTargetApi
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 

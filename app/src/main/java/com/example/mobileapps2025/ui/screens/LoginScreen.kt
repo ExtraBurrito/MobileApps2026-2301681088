@@ -11,8 +11,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.mobileapps2025.ui.theme.MobileApps2025Theme
 import com.example.mobileapps2025.ui.viewmodel.AuthViewModel
-import java.nio.file.WatchEvent
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun LoginScreen(
@@ -21,12 +22,30 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onNavigateToSignUp: () -> Unit,
     onResetPassword: () -> Unit
-){
+) {
+    LoginScreenContent(
+        currentLanguage = currentLanguage,
+        isLoading = authViewModel.isLoading,
+        errorMessage = authViewModel.errorMessage,
+        onLoginClick = { email, password ->
+            authViewModel.signIn(email, password, onLoginSuccess)
+        },
+        onNavigateToSignUp = onNavigateToSignUp,
+        onResetPassword = onResetPassword
+    )
+}
+
+@Composable
+fun LoginScreenContent(
+    currentLanguage: String,
+    isLoading: Boolean,
+    errorMessage: String?,
+    onLoginClick: (String, String) -> Unit,
+    onNavigateToSignUp: () -> Unit,
+    onResetPassword: () -> Unit
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-
-    val errorMessage = authViewModel.errorMessage
-    val isLoading = authViewModel.isLoading
 
     val emailLabel = when(currentLanguage) {
         "English" -> "Email"
@@ -56,7 +75,7 @@ fun LoginScreen(
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
-    ){
+    ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(30.dp)
@@ -77,9 +96,16 @@ fun LoginScreen(
                     modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(horizontalAlignment = Alignment.Start, modifier = Modifier.fillMaxWidth()) {
-                        Text(text = emailLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Column(
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = emailLabel,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         Spacer(modifier = Modifier.height(8.dp))
+
                         OutlinedTextField(
                             value = email, onValueChange = { email = it },
                             modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp),
@@ -89,13 +115,23 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Column(horizontalAlignment = Alignment.Start, modifier = Modifier.fillMaxWidth()) {
-                        Text(text = passwordLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Column(
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = passwordLabel,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
                         Spacer(modifier = Modifier.height(8.dp))
+
                         OutlinedTextField(
-                            value = password, onValueChange = { password = it },
+                            value = password,
+                            onValueChange = { password = it },
                             visualTransformation = PasswordVisualTransformation(),
-                            modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(24.dp),
                             singleLine = true, isError = errorMessage != null
                         )
                     }
@@ -103,14 +139,15 @@ fun LoginScreen(
                     if (errorMessage != null) {
                         Text(
                             text = errorMessage, color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp)
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 8.dp)
                         )
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Button(
-                        onClick = { authViewModel.signIn(email.trim(), password.trim(), onLoginSuccess) },
+                        onClick = { onLoginClick(email.trim(), password.trim()) },
                         modifier = Modifier.fillMaxWidth().height(50.dp),
                         shape = RoundedCornerShape(25.dp),
                         enabled = !isLoading
@@ -123,7 +160,6 @@ fun LoginScreen(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-
                     TextButton(onClick = onResetPassword) {
                         Text(text = forgotPasswordText, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
