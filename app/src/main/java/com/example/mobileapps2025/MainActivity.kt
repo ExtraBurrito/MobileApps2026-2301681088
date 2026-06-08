@@ -31,6 +31,25 @@ class MainActivity : ComponentActivity() {
         AppViewModel.provideFactory(userPreferencesRepository, networkMonitor)
     }
 
+    private val appDatabase by lazy {
+        com.example.mobileapps2025.data.local.AppDatabase.getDatabase(applicationContext)
+    }
+    private val firestoreDataSource by lazy {
+        com.example.mobileapps2025.data.network.FirestoreDataSource()
+    }
+
+    private val artistRepository by lazy {
+        com.example.mobileapps2025.data.ArtistRepository(
+            appDatabase.artistDao(),
+            firestoreDataSource,
+            networkMonitor
+        )
+    }
+
+    private val artistViewModel: com.example.mobileapps2025.ui.viewmodel.ArtistViewModel by viewModels {
+        com.example.mobileapps2025.ui.viewmodel.ArtistViewModel.provideFactory(artistRepository)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Initialize system splash before onCreate
         val splashScreen = installSplashScreen()
@@ -44,7 +63,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MobileApps2025Theme() {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    AppNavigation(appViewModel = appViewModel)
+                    AppNavigation(appViewModel = appViewModel, artistViewModel = artistViewModel)
                 }
             }
         }
@@ -52,7 +71,10 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppNavigation(appViewModel: AppViewModel) {
+fun AppNavigation(
+    appViewModel: AppViewModel,
+    artistViewModel: com.example.mobileapps2025.ui.viewmodel.ArtistViewModel
+) {
     val navController = rememberNavController()
     val currentLanguage by appViewModel.currentLanguage.collectAsStateWithLifecycle()
     val isOnline by appViewModel.isOnline.collectAsStateWithLifecycle()
@@ -125,7 +147,14 @@ fun AppNavigation(appViewModel: AppViewModel) {
         }
 
         composable("main") {
-            MainScreen(currentLanguage = currentLanguage)
+            MainScreen(
+                currentLanguage = currentLanguage,
+                viewModel = artistViewModel,
+                onArtistClick = { artistId ->
+                    //TODO
+                    println("Clicked on artist: $artistId")
+                }
+            )
         }
     }
 }
