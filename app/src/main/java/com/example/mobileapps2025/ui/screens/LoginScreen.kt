@@ -28,7 +28,11 @@ fun LoginScreen(
         isLoading = authViewModel.isLoading,
         errorMessage = authViewModel.errorMessage,
         onLoginClick = { email, password ->
-            authViewModel.signIn(email, password, onLoginSuccess)
+            authViewModel.signIn(
+                email,
+                password,
+                currentLanguage,
+                onLoginSuccess)
         },
         onNavigateToSignUp = onNavigateToSignUp,
         onResetPassword = onResetPassword

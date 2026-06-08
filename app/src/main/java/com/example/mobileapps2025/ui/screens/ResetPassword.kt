@@ -28,7 +28,7 @@ fun ResetPassword(
         isLoading = authViewModel.isLoading,
         errorMessage = authViewModel.errorMessage,
         onResetClick = { email, onSuccess ->
-            authViewModel.resetPassword(email, onSuccess)
+            authViewModel.resetPassword(email, currentLanguage, onSuccess)
         },
         onNavigateToLogin = onNavigateToLogin,
         showToast = { message ->

@@ -19,14 +19,20 @@ fun SignupScreen(
     currentLanguage: String,
     authViewModel: AuthViewModel = viewModel(),
     onNavigateToLogin: () -> Unit,
-    onSignupSuccess: () -> Unit
+    onSignupSuccess: () -> Unit,
 ){
     SignupScreenContent(
         currentLanguage = currentLanguage,
         errorMessage = authViewModel.errorMessage,
         isLoading = authViewModel.isLoading,
         onSignupClick = { email, password, username ->
-            authViewModel.signUp(email, password, username, onSignupSuccess)
+            authViewModel.signUp(
+                email = email.trim(),
+                password = password.trim(),
+                username = username.trim(),
+                language =  currentLanguage,
+                onSuccess =  onSignupSuccess
+            )
         },
         onNavigateToLogin = onNavigateToLogin
     )
