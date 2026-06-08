@@ -15,6 +15,20 @@ class UserPreferencesRepository(private val context: Context) {
     companion object {
         val LANGUAGE_KEY = stringPreferencesKey("app_language")
         val IS_LOGGED_IN_KEY = booleanPreferencesKey("is_logged_in_cache")
+        val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
+
+    }
+
+    // Theme stream (Auto by  default)
+    val themeModeFlow: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[THEME_MODE_KEY] ?: "auto"
+    }
+
+    // Save theme
+    suspend fun saveThemeMode(mode: String) {
+        context.dataStore.edit { preferences ->
+            preferences[THEME_MODE_KEY] = mode
+        }
     }
 
     // Language Stream

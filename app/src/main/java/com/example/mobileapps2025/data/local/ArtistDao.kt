@@ -54,4 +54,8 @@ interface ArtistDao {
     // Sync with cloud
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFavoritesList(favorites: List<FavoriteEntity>)
+
+    // Get Artist by ID
+    @Query("SELECT * FROM artists WHERE id = :artistId")
+    fun getArtistById(artistId: String): Flow<ArtistEntity?>
 }

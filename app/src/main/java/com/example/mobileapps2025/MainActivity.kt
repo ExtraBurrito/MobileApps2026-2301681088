@@ -17,6 +17,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.foundation.isSystemInDarkTheme
 import com.example.mobileapps2025.data.*
 import com.example.mobileapps2025.ui.screens.*
 import com.example.mobileapps2025.ui.theme.MobileApps2025Theme
@@ -64,6 +65,22 @@ class MainActivity : ComponentActivity() {
             MobileApps2025Theme() {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     AppNavigation(appViewModel = appViewModel, artistViewModel = artistViewModel)
+                }
+                val themeMode by appViewModel.themeMode.collectAsStateWithLifecycle()
+
+
+                //TODO
+
+                // Detect theme
+                val isDarkTheme = when (themeMode) {
+                    "light" -> false
+                    "dark" -> true
+                    else -> isSystemInDarkTheme()
+                }
+                MobileApps2025Theme (darkTheme = isDarkTheme) {
+                    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                        AppNavigation(appViewModel = appViewModel, artistViewModel = artistViewModel)
+                    }
                 }
             }
         }
@@ -151,9 +168,18 @@ fun AppNavigation(
                 currentLanguage = currentLanguage,
                 viewModel = artistViewModel,
                 onArtistClick = { artistId ->
-                    //TODO
-                    println("Clicked on artist: $artistId")
+                    navController.navigate("detail/$artistId")
                 }
+
+            )
+        }
+        composable("detail/{artistId}") { backStackEntry ->
+            val artistId = backStackEntry.arguments?.getString("artistId") ?: ""
+            DetailScreen(
+                artistId = artistId,
+                currentLanguage = currentLanguage,
+                viewModel = artistViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

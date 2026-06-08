@@ -16,6 +16,8 @@ class ArtistRepository(
     fun searchArtists(query: String) = artistDao.searchArtists(query)
     fun getUserFavorites(userId: String) = artistDao.getUserFavorites(userId)
 
+    fun getArtistById(artistId: String): Flow<com.example.mobileapps2025.data.local.ArtistEntity?> = artistDao.getArtistById(artistId)
+
     // Sync
     suspend fun refreshArtists() {
         // Check internet connection

@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -63,6 +64,10 @@ class ArtistViewModel(private val repository: ArtistRepository) : ViewModel() {
         viewModelScope.launch {
             repository.toggleFavorite(userId, artistId, isFavorite)
         }
+    }
+
+    fun getArtistById(artistId: String): Flow<ArtistEntity?> {
+        return repository.getArtistById(artistId)
     }
 
     // Factory to create ViewModel with repository

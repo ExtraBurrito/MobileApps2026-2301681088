@@ -64,4 +64,10 @@ class AppViewModel (
             }
         }
     }
+    val themeMode: StateFlow<String> = repository.themeModeFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "auto")
+
+    fun changeThemeMode(newMode: String) {
+        viewModelScope.launch { repository.saveThemeMode(newMode) }
+    }
 }
