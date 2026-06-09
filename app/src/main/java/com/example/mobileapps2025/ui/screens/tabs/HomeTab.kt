@@ -51,10 +51,10 @@ fun HomeTab(
             )
         )
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(36.dp))
 
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(18.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
             modifier = Modifier.fillMaxSize()
         ) {
             items(artists, key = { it.id }) { artist ->

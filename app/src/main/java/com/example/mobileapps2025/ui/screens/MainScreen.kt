@@ -1,26 +1,30 @@
 package com.example.mobileapps2025.ui.screens
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mobileapps2025.data.local.ArtistEntity
+import com.example.mobileapps2025.ui.screens.tabs.*
 import com.example.mobileapps2025.ui.viewmodel.ArtistViewModel
-import com.example.mobileapps2025.ui.elements.ArtistCard
 
 @Composable
 fun MainScreen(
     currentLanguage: String,
+    currentTheme: String,
     viewModel: ArtistViewModel,
+    onThemeChange: (String) -> Unit,
+    onLanguageChange: (String) -> Unit,
+    onLogout: () -> Unit,
     onArtistClick: (String) -> Unit
 ) {
     val artists by viewModel.artists.collectAsStateWithLifecycle()
@@ -29,11 +33,15 @@ fun MainScreen(
 
     MainScreenContent(
         currentLanguage = currentLanguage,
-        searchQuery = searchQuery,
-        onSearchQueryChanged = { viewModel.onSearchQueryChanged(it) },
+        currentTheme = currentTheme,
         artists = artists,
         favoriteIds = favoriteIds,
+        searchQuery = searchQuery,
+        onSearchQueryChanged = { viewModel.onSearchQueryChanged(it) },
         onToggleFavorite = { viewModel.toggleFavorite(it) },
+        onThemeChange = onThemeChange,
+        onLanguageChange = onLanguageChange,
+        onLogout = onLogout,
         onArtistClick = onArtistClick
     )
 }
@@ -41,99 +49,128 @@ fun MainScreen(
 @Composable
 fun MainScreenContent(
     currentLanguage: String,
-    searchQuery: String,
-    onSearchQueryChanged: (String) -> Unit,
+    currentTheme: String,
     artists: List<ArtistEntity>,
     favoriteIds: List<String>,
+    searchQuery: String,
+    onSearchQueryChanged: (String) -> Unit,
     onToggleFavorite: (String) -> Unit,
+    onThemeChange: (String) -> Unit,
+    onLanguageChange: (String) -> Unit,
+    onLogout: () -> Unit,
     onArtistClick: (String) -> Unit
 ) {
-    val searchPlaceholder = when (currentLanguage) {
-        "English" -> "Search artists..."
-        "Български" -> "Търсене на изпълнители..."
-        else -> "Поиск артистов..."
+    var selectedTab by remember { mutableIntStateOf(0) }
+
+    val tabHome = when (currentLanguage) {
+        "English" -> "Home"
+        "Български" -> "Начало"
+        else -> "Главная"
+    }
+    val tabFavs = when (currentLanguage) {
+        "English" -> "Favorites"
+        "Български" -> "Избрани"
+        else -> "Избранное"
+    }
+    val tabProfile = when (currentLanguage) {
+        "English" -> "Profile"
+        "Български" -> "Профил"
+        else -> "Профиль"
+    }
+    val tabSettings = when (currentLanguage) {
+        "English" -> "Settings"
+        "Български" -> "Настройки"
+        else -> "Настройки"
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 18.dp)
-            .padding(top = 48.dp)
-    ) {
-        // Search Bar
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = onSearchQueryChanged,
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text(searchPlaceholder) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-            shape = RoundedCornerShape(24.dp),
-            singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
-                focusedBorderColor = MaterialTheme.colorScheme.primary
-            )
-        )
+    val tabs = listOf(
+        tabHome,
+        tabFavs,
+        tabProfile,
+        tabSettings
+    )
+    val icons = listOf(
+        Icons.Filled.Home,
+        Icons.Filled.Favorite,
+        Icons.Filled.Person,
+        Icons.Filled.Settings
+    )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Cards List
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(artists, key = { it.id }) { artist ->
-                val isFavorite = favoriteIds.contains(artist.id)
-
-                ArtistCard(
-                    artist = artist,
+    Scaffold(
+        bottomBar = {
+            NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
+                tabs.forEachIndexed { index, title ->
+                    NavigationBarItem(
+                        icon = { Icon(icons[index], contentDescription = title) },
+                        label = { Text(title) },
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index }
+                    )
+                }
+            }
+        }
+    ) { innerPadding ->
+        // innerPadding protects our content from going under the navigation bar
+        Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+            when (selectedTab) {
+                0 -> HomeTab(
                     currentLanguage = currentLanguage,
-                    isFavorite = isFavorite,
-                    onFavoriteClick = { onToggleFavorite(artist.id) },
-                    onClick = { onArtistClick(artist.id) }
+                    searchQuery = searchQuery,
+                    onSearchQueryChanged = onSearchQueryChanged,
+                    artists = artists,
+                    favoriteIds = favoriteIds,
+                    onToggleFavorite = onToggleFavorite,
+                    onArtistClick = onArtistClick
+                )
+                1 -> FavoritesTab(
+                    currentLanguage = currentLanguage,
+                    artists = artists,
+                    favoriteIds = favoriteIds,
+                    onToggleFavorite = onToggleFavorite,
+                    onArtistClick = onArtistClick
+                )
+                2 -> {
+                    val currentUser =
+                        com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                    val actualUsername = currentUser?.displayName ?: "Guest"
+                    val actualEmail = currentUser?.email ?: "No email"
+                    ProfileTab(
+
+                        currentLanguage = currentLanguage,
+                        favoriteCount = favoriteIds.size,
+                        onLogout = onLogout,
+                        username = actualUsername,
+                        email = actualEmail,
+                    )
+                }
+                3 -> SettingsTab(
+                    currentLanguage = currentLanguage,
+                    currentTheme = currentTheme,
+                    onThemeChange = onThemeChange,
+                    onLanguageChange = onLanguageChange
                 )
             }
         }
     }
 }
 
-@Preview(showBackground = true, device = "id:pixel_6_pro", showSystemUi = true)
+@Preview(showBackground = true)
 @Composable
 fun MainScreenPreview() {
-    val dummyArtists = listOf(
-        ArtistEntity(
-            id = "1",
-            name = "Linkin Park",
-            genre = "Rock",
-            imageUrl = "",
-            descriptionEn = "Legendary rock band.",
-            descriptionRu = "Легендарная рок-группа.",
-            descriptionBg = "Легендарна рок група.",
-            concertCities = "London, New York, Sofia"
-        ),
-        ArtistEntity(
-            id = "2",
-            name = "Eminem",
-            genre = "Hip-Hop",
-            imageUrl = "",
-            descriptionEn = "Rap God.",
-            descriptionRu = "Бог рэпа.",
-            descriptionBg = "Бог на рапа.",
-            concertCities = "Detroit, Los Angeles"
-        )
-    )
-
     MaterialTheme {
-        Surface(color = MaterialTheme.colorScheme.background) {
-            MainScreenContent(
-                currentLanguage = "English",
-                searchQuery = "",
-                onSearchQueryChanged = {},
-                artists = dummyArtists,
-                favoriteIds = listOf("1"),
-                onToggleFavorite = {},
-                onArtistClick = {}
-            )
-        }
+        MainScreenContent(
+            currentLanguage = "English",
+            currentTheme = "Light",
+            artists = emptyList(),
+            favoriteIds = emptyList(),
+            searchQuery = "",
+            onSearchQueryChanged = {},
+            onToggleFavorite = {},
+            onThemeChange = {},
+            onLanguageChange = {},
+            onLogout = {},
+            onArtistClick = {}
+        )
     }
 }
+

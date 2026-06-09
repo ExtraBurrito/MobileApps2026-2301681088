@@ -41,13 +41,13 @@ fun FavoritesTab(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 18.dp)
-            .padding(top = 48.dp)
+            .padding(top = 36.dp)
     ) {
         Text(
             text = title,
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 16.dp, bottom = 16.dp)
+            modifier = Modifier.padding(top = 16.dp, bottom = 36.dp)
         )
 
         if (favoriteArtists.isEmpty()) {

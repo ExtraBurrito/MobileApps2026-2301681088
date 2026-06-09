@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -47,8 +48,12 @@ fun SettingsTab(
         else -> "Темная"
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text(text = title, fontSize = 32.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp, bottom = 24.dp))
+    Column(
+        modifier = Modifier.fillMaxSize()
+        .padding(horizontal = 18.dp)
+        .padding(top = 48.dp)
+    ) {
+        Text(text = title, fontSize = 32.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 24.dp))
 
 
         Text(text = themeLabel, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -79,5 +84,17 @@ fun SettingsTab(
                 )
             }
         }
+    }
+}
+@Preview(showBackground = true, showSystemUi = true, device = "id:pixel_6_pro")
+@Composable
+fun SettingsTabPreview() {
+    MaterialTheme {
+        SettingsTab(
+            currentLanguage = "English",
+            currentTheme = "light",
+            onThemeChange = {},
+            onLanguageChange = {}
+        )
     }
 }

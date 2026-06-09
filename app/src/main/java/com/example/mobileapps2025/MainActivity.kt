@@ -22,6 +22,7 @@ import com.example.mobileapps2025.data.*
 import com.example.mobileapps2025.ui.screens.*
 import com.example.mobileapps2025.ui.theme.MobileApps2025Theme
 import com.example.mobileapps2025.ui.viewmodel.*
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
 
@@ -41,9 +42,7 @@ class MainActivity : ComponentActivity() {
 
     private val artistRepository by lazy {
         com.example.mobileapps2025.data.ArtistRepository(
-            appDatabase.artistDao(),
-            firestoreDataSource,
-            networkMonitor
+            appDatabase.artistDao(), firestoreDataSource, networkMonitor
         )
     }
 
@@ -62,14 +61,17 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
+            val themeMode by appViewModel.themeMode.collectAsStateWithLifecycle()
+
             MobileApps2025Theme() {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
                     AppNavigation(appViewModel = appViewModel, artistViewModel = artistViewModel)
                 }
                 val themeMode by appViewModel.themeMode.collectAsStateWithLifecycle()
 
-
-                //TODO
 
                 // Detect theme
                 val isDarkTheme = when (themeMode) {
@@ -77,25 +79,40 @@ class MainActivity : ComponentActivity() {
                     "dark" -> true
                     else -> isSystemInDarkTheme()
                 }
-                MobileApps2025Theme (darkTheme = isDarkTheme) {
-                    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                        AppNavigation(appViewModel = appViewModel, artistViewModel = artistViewModel)
+                MobileApps2025Theme(darkTheme = isDarkTheme) {
+                    val view = androidx.compose.ui.platform.LocalView.current
+                    if (!view.isInEditMode) {
+                        androidx.compose.runtime.SideEffect {
+                            val window = (view.context as android.app.Activity).window
+                            androidx.core.view.WindowCompat.getInsetsController(window, view)
+                                .isAppearanceLightStatusBars = !isDarkTheme
+                        }
+                    }
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        AppNavigation(
+                            appViewModel = appViewModel,
+                            artistViewModel = artistViewModel
+                        )
                     }
                 }
             }
         }
     }
 }
-
 @Composable
 fun AppNavigation(
     appViewModel: AppViewModel,
     artistViewModel: com.example.mobileapps2025.ui.viewmodel.ArtistViewModel
 ) {
     val navController = rememberNavController()
+
     val currentLanguage by appViewModel.currentLanguage.collectAsStateWithLifecycle()
     val isOnline by appViewModel.isOnline.collectAsStateWithLifecycle()
     val cachedAuthState by appViewModel.cachedAuthState.collectAsStateWithLifecycle()
+    val themeMode by appViewModel.themeMode.collectAsStateWithLifecycle()
 
     val authViewModel: AuthViewModel = viewModel()
 
@@ -138,9 +155,7 @@ fun AppNavigation(
             LoginScreen(
                 currentLanguage = currentLanguage,
                 authViewModel = authViewModel,
-                onLoginSuccess = {
-                    navController.navigate("main") { popUpTo(0) }
-                },
+                onLoginSuccess = { navController.navigate("main") { popUpTo(0) } },
                 onNavigateToSignUp = { navController.navigate("signup") },
                 onResetPassword = { navController.navigate("reset") }
             )
@@ -162,24 +177,28 @@ fun AppNavigation(
                 onNavigateToLogin = { navController.navigate("login") { popUpTo("login") { inclusive = true } } }
             )
         }
-
         composable("main") {
             MainScreen(
                 currentLanguage = currentLanguage,
+                currentTheme = themeMode,
                 viewModel = artistViewModel,
+                onThemeChange = { appViewModel.changeThemeMode(it) },
+                onLanguageChange = { appViewModel.changeLanguage(it) },
+                onLogout = { FirebaseAuth.getInstance().signOut() }, // LogOut from account
                 onArtistClick = { artistId ->
-                    navController.navigate("detail/$artistId")
-                }
 
-            )
-        }
-        composable("detail/{artistId}") { backStackEntry ->
-            val artistId = backStackEntry.arguments?.getString("artistId") ?: ""
-            DetailScreen(
-                artistId = artistId,
-                currentLanguage = currentLanguage,
-                viewModel = artistViewModel,
-                onNavigateBack = { navController.popBackStack() }
+                    navController.navigate("detail/$artistId")
+                    composable("detail/{artistId}") { backStackEntry ->
+                        val artistId = backStackEntry.arguments?.getString("artistId") ?: ""
+
+                        DetailScreen(
+                            artistId = artistId,
+                            currentLanguage = currentLanguage,
+                            viewModel = artistViewModel,
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                }
             )
         }
     }

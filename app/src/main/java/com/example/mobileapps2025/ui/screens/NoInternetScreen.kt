@@ -1,5 +1,6 @@
 package com.example.mobileapps2025.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
@@ -53,8 +54,16 @@ fun NoInternetScreen(currentLanguage: String) {
         }
     }
 }
+@Preview(showBackground = true, device = "id:pixel_9_pro",
+    uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL,
+    showSystemUi = true
+)
+@Composable
+fun NoInternetPreviewRussian() {
+    NoInternetScreen(currentLanguage = "Русский")
+}
 @Preview(showBackground = true, device = "id:pixel_9_pro")
 @Composable
 fun NoInternetPreview() {
-    NoInternetScreen(currentLanguage = "Русский")
+    NoInternetScreen(currentLanguage = "English")
 }
