@@ -8,9 +8,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -18,6 +20,15 @@ import com.example.mobileapps2025.data.ArtistRepository
 import com.example.mobileapps2025.data.local.ArtistEntity
 
 class ArtistViewModel(private val repository: ArtistRepository) : ViewModel() {
+
+    // Auth State Flow
+    private val userIdFlow: Flow<String> = callbackFlow {
+        val listener = FirebaseAuth.AuthStateListener { auth ->
+            trySend(auth.currentUser?.uid ?: "")
+        }
+        FirebaseAuth.getInstance().addAuthStateListener(listener)
+        awaitClose { FirebaseAuth.getInstance().removeAuthStateListener(listener) }
+    }
 
     private val currentUserId: String?
         get() = FirebaseAuth.getInstance().currentUser?.uid
@@ -43,9 +54,11 @@ class ArtistViewModel(private val repository: ArtistRepository) : ViewModel() {
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // List of artist IDs added to favorites by the current user
+    @OptIn(ExperimentalCoroutinesApi::class)
     val favoriteIds: StateFlow<List<String>> =
-        repository.getUserFavorites(currentUserId ?: "")
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        userIdFlow.flatMapLatest { userId ->
+            repository.getUserFavorites(userId)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
         // Sync with network on initialization

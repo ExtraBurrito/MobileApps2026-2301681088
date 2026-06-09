@@ -10,6 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -41,13 +42,13 @@ class MainActivity : ComponentActivity() {
     }
 
     private val artistRepository by lazy {
-        com.example.mobileapps2025.data.ArtistRepository(
+        ArtistRepository(
             appDatabase.artistDao(), firestoreDataSource, networkMonitor
         )
     }
 
-    private val artistViewModel: com.example.mobileapps2025.ui.viewmodel.ArtistViewModel by viewModels {
-        com.example.mobileapps2025.ui.viewmodel.ArtistViewModel.provideFactory(artistRepository)
+    private val artistViewModel: ArtistViewModel by viewModels {
+        ArtistViewModel.provideFactory(artistRepository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,40 +64,29 @@ class MainActivity : ComponentActivity() {
         setContent {
             val themeMode by appViewModel.themeMode.collectAsStateWithLifecycle()
 
-            MobileApps2025Theme() {
+            // Detect theme
+            val isDarkTheme = when (themeMode) {
+                "light" -> false
+                "dark" -> true
+                else -> isSystemInDarkTheme()
+            }
+            MobileApps2025Theme(darkTheme = isDarkTheme) {
+                val view = androidx.compose.ui.platform.LocalView.current
+                if (!view.isInEditMode) {
+                    androidx.compose.runtime.SideEffect {
+                        val window = (view.context as android.app.Activity).window
+                        androidx.core.view.WindowCompat.getInsetsController(window, view)
+                            .isAppearanceLightStatusBars = !isDarkTheme
+                    }
+                }
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background,
                 ) {
-                    AppNavigation(appViewModel = appViewModel, artistViewModel = artistViewModel)
-                }
-                val themeMode by appViewModel.themeMode.collectAsStateWithLifecycle()
-
-
-                // Detect theme
-                val isDarkTheme = when (themeMode) {
-                    "light" -> false
-                    "dark" -> true
-                    else -> isSystemInDarkTheme()
-                }
-                MobileApps2025Theme(darkTheme = isDarkTheme) {
-                    val view = androidx.compose.ui.platform.LocalView.current
-                    if (!view.isInEditMode) {
-                        androidx.compose.runtime.SideEffect {
-                            val window = (view.context as android.app.Activity).window
-                            androidx.core.view.WindowCompat.getInsetsController(window, view)
-                                .isAppearanceLightStatusBars = !isDarkTheme
-                        }
-                    }
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        AppNavigation(
-                            appViewModel = appViewModel,
-                            artistViewModel = artistViewModel
-                        )
-                    }
+                    AppNavigation(
+                        appViewModel = appViewModel,
+                        artistViewModel = artistViewModel
+                    )
                 }
             }
         }
@@ -105,7 +95,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation(
     appViewModel: AppViewModel,
-    artistViewModel: com.example.mobileapps2025.ui.viewmodel.ArtistViewModel
+    artistViewModel: ArtistViewModel
 ) {
     val navController = rememberNavController()
 
@@ -117,19 +107,31 @@ fun AppNavigation(
     val authViewModel: AuthViewModel = viewModel()
 
     // Dynamically determine the start screen
-    val startDestination = if (!isOnline) {
-        "no_internet"
-    } else if (cachedAuthState) {
-        "main"
-    } else {
-        "welcome"
-    }
-    LaunchedEffect(isOnline) {
+    val startDestination = remember(isOnline, cachedAuthState) {
         if (!isOnline) {
-            navController.navigate("no_internet") { popUpTo(0) } // clear history
+            "no_internet"
+        } else if (cachedAuthState) {
+            "main"
         } else {
-            val destination = if (cachedAuthState) "main" else "welcome"
-            navController.navigate(destination) { popUpTo(0) }
+            "welcome"
+        }
+    }
+
+    LaunchedEffect(isOnline, cachedAuthState) {
+        val currentRoute = navController.currentBackStackEntry?.destination?.route
+        val targetRoute = if (!isOnline) {
+            "no_internet"
+        } else if (cachedAuthState) {
+            "main"
+        } else {
+            "welcome"
+        }
+
+        if (currentRoute != targetRoute) {
+            navController.navigate(targetRoute) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
         }
     }
 
@@ -166,7 +168,9 @@ fun AppNavigation(
                 currentLanguage = currentLanguage,
                 authViewModel = authViewModel,
                 onNavigateToLogin = { navController.navigate("login") },
-                onSignupSuccess = { navController.navigate("main") { popUpTo(0) } }
+                onSignupSuccess = {
+                    navController.navigate("main") { popUpTo(0) }
+                }
             )
         }
 
@@ -186,19 +190,18 @@ fun AppNavigation(
                 onLanguageChange = { appViewModel.changeLanguage(it) },
                 onLogout = { FirebaseAuth.getInstance().signOut() }, // LogOut from account
                 onArtistClick = { artistId ->
-
                     navController.navigate("detail/$artistId")
-                    composable("detail/{artistId}") { backStackEntry ->
-                        val artistId = backStackEntry.arguments?.getString("artistId") ?: ""
-
-                        DetailScreen(
-                            artistId = artistId,
-                            currentLanguage = currentLanguage,
-                            viewModel = artistViewModel,
-                            onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
                 }
+            )
+        }
+        composable("detail/{artistId}") { backStackEntry ->
+            val artistId = backStackEntry.arguments?.getString("artistId") ?: ""
+
+            DetailScreen(
+                artistId = artistId,
+                currentLanguage = currentLanguage,
+                viewModel = artistViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

@@ -36,18 +36,25 @@ class AppViewModel (
     val currentLanguage: StateFlow<String> = repository.currentLanguageFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "Русский")
 
+    private val authStateListener = FirebaseAuth.AuthStateListener { auth ->
+        val isReallyLoggedIn = auth.currentUser != null
+        viewModelScope.launch {
+            repository.saveAuthCache(isReallyLoggedIn)
+        }
+    }
+
     init {
         viewModelScope.launch {
             // Wait to loading cache from DataStore then remove the splash
             repository.isLoggedInFlow.first()
             _isAppReady.value = true
         }
-        FirebaseAuth.getInstance().addAuthStateListener { auth ->
-            val isReallyLoggedIn = auth.currentUser != null
-            viewModelScope.launch {
-                repository.saveAuthCache(isReallyLoggedIn)
-            }
-        }
+        FirebaseAuth.getInstance().addAuthStateListener(authStateListener)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        FirebaseAuth.getInstance().removeAuthStateListener(authStateListener)
     }
     //Language changing function
     fun changeLanguage(newLanguage: String) {
